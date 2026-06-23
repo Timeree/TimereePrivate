@@ -1,0 +1,16 @@
+{
+  "name": "Minimal-Ubuntu-SSHD",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "sudo apt update && sudo apt install -y python3 python3-pip microsocks && pip3 install pyftpdlib;"
+}

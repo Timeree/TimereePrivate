@@ -1,0 +1,15 @@
+#!/bin/bash
+(
+  set -e
+  cd "$HOME/Timeree" || exit 1
+
+  SRC_DIR="src"
+  OUT_BLOB="blob"
+
+  PASS_FILE="${SRC_DIR}/PASSWORD"
+  [ ! -f "$PASS_FILE" ] && echo "Password file missing: $PASS_FILE" && exit 1
+  PASSWORD=$(cat "$PASS_FILE")
+
+  zip -q -0 -e -P "$PASSWORD" "$OUT_BLOB" -r "$SRC_DIR"
+  echo "Packing Complete"
+)

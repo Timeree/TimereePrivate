@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+(
+  set -eux
+
+  cd ~ || exit
+
+  if [ -d "$HOME/Timeree" ]; then
+  
+    cd "$HOME/Timeree" && git pull --ff-only
+  
+  else
+  
+    git clone https://github.com/Timeree/TimereePrivate.git "$HOME/Timeree"
+    
+  fi
+
+  echo 'export PATH="$PATH:$HOME/Timeree/src/tools"' > "$PREFIX/etc/profile.d/timeree.sh"
+  
+  chmod +x "$PREFIX/etc/profile.d/timeree.sh"
+
+  source $PREFIX/etc/profile.d/timeree.sh
+  
+)
