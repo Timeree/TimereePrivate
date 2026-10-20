@@ -12,5 +12,5 @@
     }
   },
   "remoteUser": "vscode",
-  "postCreateCommand": "sudo apt update && sudo apt install -y python3 python3-pip microsocks && pip3 install pyftpdlib;"
+  "postCreateCommand": "sudo apt update && sudo apt install -y python3 python3-pip microsocks gost && pip3 install pyftpdlib;"
 }
