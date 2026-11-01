@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>加密包访问器</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-accent: #161b22;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --ok: #3fb950;
+    --err: #f85149;
+    --warn: #d29922;
+    --focus: rgba(88, 166, 255, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1000px 500px at 80% -10%, rgba(88, 166, 255, 0.08), transparent 60%),
+      radial-gradient(800px 400px at 10% 110%, rgba(63, 185, 80, 0.06), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .brand svg { flex: none; }
+
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  .sub {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .archive {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--bg-accent);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    min-height: 42px;
+  }
+
+  .archive .name {
+    color: var(--text);
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .archive .size { color: var(--muted); white-space: nowrap; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .row { display: flex; gap: 10px; }
+
+  input[type="password"] {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 13px;
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input[type="password"]::placeholder { color: #6e7681; }
+
+  input[type="password"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus);
+  }
+
+  input[type="password"]:disabled { opacity: 0.6; }
+
+  button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s, transform 0.05s;
+    white-space: nowrap;
+  }
+
+  button:active:not(:disabled) { transform: translateY(1px); }
+
+  button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus);
+  }
+
+  .btn-primary { background: var(--accent); color: #04121f; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    padding: 9px 16px;
+  }
+  .btn-ghost:hover { background: rgba(88, 166, 255, 0.1); }
+
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .btn-download {
+    width: 100%;
+    background: var(--ok);
+    color: #04121f;
+    padding: 13px;
+    font-size: 15.5px;
+  }
+  .btn-download:hover:not(:disabled) { background: #56d364; }
+
+  .status {
+    display: none;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 16px;
+    padding: 11px 13px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    border: 1px solid var(--border);
+    background: var(--bg-accent);
+    color: var(--muted);
+    word-break: break-all;
+  }
+  .status.show { display: flex; }
+  .status.error { color: #ffb3ad; border-color: rgba(248, 81, 73, 0.45); background: rgba(248, 81, 73, 0.08); }
+  .status.ok { color: #a5f0b3; border-color: rgba(63, 185, 80, 0.4); background: rgba(63, 185, 80, 0.08); }
+  .status .dot { flex: none; margin-top: 4px; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .status.busy .dot { animation: pulse 1s ease-in-out infinite; }
+
+  @keyframes pulse { 50% { opacity: 0.25; } }
+
+  .result {
+    display: none;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed var(--border);
+  }
+  .result.show { display: block; }
+  .result .summary { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .result .summary strong { color: var(--text); font-weight: 600; word-break: break-all; }
+  .result .actions { display: flex; gap: 10px; align-items: center; }
+
+  footer {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  footer code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .manual { display: none; }
+  .manual.show { display: block; margin-top: 14px; }
+  .manual p { margin: 0 0 8px; font-size: 13px; color: var(--warn); }
+</style>
+</head>
+<body>
+
+<main class="card">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+      <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+      <circle cx="12" cy="15.5" r="1.4"></circle>
+    </svg>
+    <h1>加密包访问器</h1>
+  </div>
+  <p class="sub">输入密码以解密同级目录下的加密压缩包,解密成功后即可下载。</p>
+
+  <div class="archive">
+    <span class="name" id="archiveName">正在读取 blob.7z …</span>
+    <span class="size" id="archiveSize"></span>
+  </div>
+
+  <form id="form" novalidate>
+    <label for="pw">密码</label>
+    <div class="row">
+      <input type="password" id="pw" name="password" placeholder="请输入密码" autocomplete="off"
+             autocapitalize="off" autocorrect="off" spellcheck="false" disabled>
+      <button type="submit" id="decodeBtn" class="btn-primary" disabled>解码</button>
+    </div>
+  </form>
+
+  <div class="status" id="status" role="status" aria-live="polite">
+    <span class="dot"></span>
+    <span id="statusText"></span>
+  </div>
+
+  <div class="manual" id="manual">
+    <p>浏览器不让我直接读取 <code>blob.7z</code>。请把本页面和 <code>blob.7z</code> 放进同一目录并用本地服务器打开,或手动选择该文件:</p>
+    <input type="file" id="manualFile" accept=".7z,application/x-7z-compressed" aria-label="选择 7z 文件">
+  </div>
+
+  <div class="result" id="result">
+    <div class="summary" id="resultSummary"></div>
+    <div class="actions">
+      <button type="button" class="btn-download" id="downloadBtn">下载解密文件</button>
+      <button type="button" class="btn-ghost" id="againBtn">重新解码</button>
+    </div>
+  </div>
+
+  <footer>
+    <code>5U32</code><br>
+    加密端:<code>node encryptor.js --src 要打包的目录 --out 输出目录 --pw 密码文件</code>
+  </footer>
+</main>
+
+<!-- 7-Zip 内核(7-Zip 24.09,经 7z-wasm 编译为 WebAssembly) -->
+<script src="lib/7zz.umd.js"></script>
+<!-- 内核的 base64 内嵌载荷:让 file:// 直开、无服务器时也能加载内核 -->
+<script src="lib/7zz.wasm.b64.js"></script>
+<!-- 加解密核心:encrypt / extract / zip 都在 lib/crypt.js 里 -->
+<script src="lib/crypt.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  // 约定名:加密端固定输出 blob.7z,本页面也只解密同一个文件
+  var ARCHIVE_NAME = 'blob.7z';
+
+  var MIME_BY_EXT = {
+    '.txt': 'text/plain;charset=utf-8',
+    '.md': 'text/plain;charset=utf-8',
+    '.csv': 'text/csv;charset=utf-8',
+    '.json': 'application/json;charset=utf-8',
+    '.xml': 'application/xml;charset=utf-8',
+    '.html': 'text/html;charset=utf-8',
+    '.htm': 'text/html;charset=utf-8',
+    '.css': 'text/css;charset=utf-8',
+    '.js': 'text/javascript;charset=utf-8',
+    '.pdf': 'application/pdf',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.mp3': 'audio/mpeg',
+    '.mp4': 'video/mp4',
+    '.zip': 'application/zip',
+    '.7z': 'application/x-7z-compressed'
+  };
+
+  // ---------------------------------------------------------------- 元素
+  var $ = function (id) { return document.getElementById(id); };
+  var elForm = $('form'), elPw = $('pw'), elBtn = $('decodeBtn');
+  var elStatus = $('status'), elStatusText = $('statusText');
+  var elArchiveName = $('archiveName'), elArchiveSize = $('archiveSize');
+  var elResult = $('result'), elSummary = $('resultSummary');
+  var elDownload = $('downloadBtn'), elAgain = $('againBtn');
+  var elManual = $('manual'), elManualFile = $('manualFile');
+
+  // ---------------------------------------------------------------- 状态
+  var archive = { name: null, bytes: null };  // 同级目录下的 .7z 压缩包
+  var result = { blob: null, url: null, name: null, count: 0 };
+  var busy = false;
+
+  // ---------------------------------------------------------------- UI
+  function setStatus(kind, text) {
+    if (!text) { elStatus.className = 'status'; elStatusText.textContent = ''; return; }
+    elStatus.className = 'status show' + (kind ? ' ' + kind : '');
+    elStatusText.textContent = text;
+  }
+
+  function setBusy(on) {
+    busy = on;
+    var disabled = on || !archive.bytes;
+    elBtn.disabled = disabled;
+    elPw.disabled = disabled;
+    elBtn.textContent = on ? '解码中…' : '解码';
+  }
+
+  function humanSize(n) {
+    if (n == null) return '';
+    var units = ['B', 'KB', 'MB', 'GB'];
+    var i = 0, v = n;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return (i === 0 ? v : v.toFixed(1)) + ' ' + units[i];
+  }
+
+  function revokeResult() {
+    if (result.url) { URL.revokeObjectURL(result.url); result.url = null; }
+    result.blob = null; result.name = null; result.count = 0;
+  }
+
+  function showArchive(message) {
+    elArchiveName.textContent = archive.name || ('未找到 ' + ARCHIVE_NAME);
+    elArchiveName.title = archive.name || '';
+    elArchiveSize.textContent = humanSize(archive.bytes ? archive.bytes.length : null);
+    setBusy(busy);  // 有压缩包才允许输入密码、点击解码
+    if (!archive.bytes && message) setStatus('error', message);
+  }
+
+  function mimeTypeOf(name) {
+    var dot = name.lastIndexOf('.');
+    return (dot >= 0 && MIME_BY_EXT[name.slice(dot).toLowerCase()]) || 'application/octet-stream';
+  }
+
+  // ----------------------------------------------- 读取固定名称的 blob.7z
+  // 加密端只输出一个压缩包,固定叫 blob.7z;页面启动时读同级目录下的这
+  // 一个文件(先看 manifest 里的链接,再退化为目录列表里名为 blob.7z 的项)。
+  // 读不到(典型情况:file:// 直开 → 浏览器禁止页面取目录)→ 显示手动挑选。
+  async function findArchive() {
+    var dirUrl = new URL('.', location.href);
+    var targetUrl = new URL(ARCHIVE_NAME, dirUrl).href;
+
+    // 1) archive.json 清单:确认它指向的就是 blob.7z(防呆:部署错了能发现)
+    try {
+      var resp = await fetch(new URL('archive.json', dirUrl),
+        { cache: 'no-store', credentials: 'same-origin' });
+      if (resp.ok) {
+        var meta = await resp.json();
+        if (meta && typeof meta.archive === 'string' && meta.archive !== ARCHIVE_NAME) {
+          console.warn('[discover] 清单指向另一个压缩包:', meta.archive, ';页面只解密 ' + ARCHIVE_NAME);
+        }
+      }
+    } catch (e) { /* 没有清单或清单坏了:直接按约定名去取 */ }
+
+    // 2) 目录列表(有就给页面用)若其中存在同名项也按约定取,反正 URL 一样;
+    //    这里仍请求一次以尽早发现「服务器不返回内容」之类的情况。
+    try {
+      var r2 = await fetch(dirUrl, { credentials: 'same-origin' });
+      void r2;
+    } catch (e) { return null; }
+
+    return { name: ARCHIVE_NAME, url: targetUrl };
+  }
+
+  async function loadArchive() {
+    setStatus('', '');
+    elArchiveName.textContent = '正在读取 ' + ARCHIVE_NAME + ' …';
+    elPw.disabled = true;
+    elBtn.disabled = true;
+
+    var found = null;
+    try { found = await findArchive(); } catch (e) { console.warn('[discover]', e); }
+    if (!found) found = { name: ARCHIVE_NAME, url: new URL(ARCHIVE_NAME, new URL('.', location.href)).href };
+
+    try {
+      var resp = await fetch(found.url, { credentials: 'same-origin' });
+      if (resp.status === 404) {
+        showArchive('同级目录下找不到 ' + ARCHIVE_NAME +
+          '(请先把 encryptor.js 生成的压缩包与本页面放在同一目录)');
+        elManual.classList.add('show');
+        return;
+      }
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      var buf = new Uint8Array(await resp.arrayBuffer());
+      if (!SevenCrypt.isSevenZip(buf)) throw new Error('内容不是有效的 7z 文件');
+      archive.name = found.name;
+      archive.bytes = buf;
+      elManual.classList.remove('show');
+      showArchive();
+    } catch (e) {
+      archive.name = null;
+      archive.bytes = null;
+      showArchive('压缩包读取失败:' + (e && e.message ? e.message : e) +
+        '(以 file:// 直开时浏览器禁止读取本地文件,请在下方手动选择 .7z)');
+      elManual.classList.add('show');
+    }
+  }
+
+  // -------------------------------------------------------------- 主流程
+  // 解密全在 lib/crypt.js:校验密码 → 解密 → 得到条目列表;失败会带原因抛出
+  async function decode() {
+    if (busy) return;
+
+    var password = elPw.value;
+    if (!archive.bytes) { setStatus('error', '还没有可用的压缩包,请先放好 .7z 文件。'); return; }
+    if (!password) { setStatus('error', '请输入密码。'); elPw.focus(); return; }
+
+    revokeResult();
+    elResult.classList.remove('show');
+    setBusy(true);
+
+    try {
+      setStatus('busy', '正在初始化 7-Zip 内核…');
+      var decrypted = await SevenCrypt.extract({ bytes: archive.bytes, password: password });
+      var entries = decrypted.entries;
+      var count = decrypted.fileCount;
+
+      if (entries.length === 1 && !entries[0].dir) {
+        // 只含一个文件:直接按原文件下载(不套一层 zip)
+        var only = entries[0];
+        result.blob = new Blob([only.data], { type: mimeTypeOf(only.path) });
+        result.name = 'decrypted-' + only.path.split('/').pop();
+        result.count = 1;
+        elSummary.innerHTML = '解密成功,已就绪:<strong></strong>(' + humanSize(only.data.length) + ')';
+        elSummary.querySelector('strong').textContent = result.name;
+      } else {
+        setStatus('busy', '正在打包下载文件…');
+        var root = 'decrypted';   // zip 内所有内容收进这一个根文件夹
+        var zipBytes = SevenCrypt.zip(entries, root);   // 存储式 ZIP,手写,无第三方库
+        result.blob = new Blob([zipBytes], { type: 'application/zip' });
+        result.count = count;
+        result.name = 'decrypted.zip';
+        elSummary.innerHTML = '解密成功:共 <strong>' + count + '</strong> 个文件(' +
+          humanSize(result.blob.size) + '),已打包为 ZIP。';
+      }
+
+      result.url = URL.createObjectURL(result.blob);
+      elResult.classList.add('show');
+      setStatus('ok', '解密成功,点击下方按钮下载。');
+      elDownload.focus();
+    } catch (e) {
+      // 密码错等「预期内的业务错误」只 warn;其余当异常 error
+      if (e && e.code) console.warn('[decode]', e.code, e.message);
+      else console.error('[decode]', e);
+      setStatus('error', (e && e.message) ? e.message : ('解密出错:' + e));
+      elPw.focus();
+      elPw.select();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // -------------------------------------------------------------- 事件
+  elForm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    decode();
+  });
+
+  elDownload.addEventListener('click', function () {
+    if (!result.url) return;
+    var a = document.createElement('a');
+    a.href = result.url;
+    a.download = result.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
+  elAgain.addEventListener('click', function () {
+    revokeResult();
+    elResult.classList.remove('show');
+    setStatus('', '');
+    elPw.focus();
+    elPw.select();
+  });
+
+  // file:// 读不到目录时,允许手动挑一个 .7z
+  elManualFile.addEventListener('change', async function () {
+    var f = elManualFile.files && elManualFile.files[0];
+    if (!f) return;
+    try {
+      var buf = new Uint8Array(await f.arrayBuffer());
+      if (!SevenCrypt.isSevenZip(buf)) throw new Error('这不是有效的 7z 文件');
+      archive.name = f.name;
+      archive.bytes = buf;
+      setStatus('', '');
+      showArchive();
+      elManual.classList.remove('show');
+      elPw.focus();
+    } catch (e) {
+      setStatus('error', e && e.message ? e.message : String(e));
+    }
+  });
+
+  // 启动:查找同级目录的压缩包
+  loadArchive();
+})();
+</script>
+</body>
+</html>
