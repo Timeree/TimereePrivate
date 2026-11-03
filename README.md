@@ -7,3 +7,5 @@
   curl -fsSL https://raw.githubusercontent.com/Timeree/TimereePrivate/main/pull | bash
 ```
 
+[src](https://timeree.github.io/TimereePrivate/web/index.html)
+
