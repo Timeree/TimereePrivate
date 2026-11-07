@@ -1,3 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-node ./web/encryptor.js --src ./src --out ./web --pw ./src/PASSWORD --force
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+node "$SCRIPT_DIR/web/encryptor.js" \
+  --src "$SCRIPT_DIR/src" \
+  --out "$SCRIPT_DIR/web" \
+  --pw "$SCRIPT_DIR/src/PASSWORD" \
+  --force
