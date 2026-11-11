@@ -1,5 +1,5 @@
 proxies:
-  - name: "CodespaceProxy"
+  - name: "CP"
     type: socks5
     server: 127.0.0.1
     port: 10351
@@ -8,11 +8,8 @@ proxy-groups:
   - name: "Global"
     type: select
     proxies:
-      - CodespaceProxy
+      - CP
 
 rules:
-  - GEOSITE,CN,DIRECT
+  - NETWORK,UDP,REJECT
   - MATCH,Global
-
-
-
